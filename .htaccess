@@ -1,5 +1,0 @@
-# Serve JS files with correct MIME type
-AddType application/javascript .js
-AddType application/javascript .jsx
-AddType application/javascript .ts
-AddType application/javascript .tsx
