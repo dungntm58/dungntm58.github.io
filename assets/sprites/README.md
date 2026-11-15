@@ -1,38 +1,54 @@
 # Sprite assets
 
-Drop PNG sprites here to replace the procedural placeholders. `PreloadScene`
-loads each file by the path below; if a file is missing it falls back to the
-old hand-coded pixel graphics, so the game keeps running either way.
+Every sprite the game loads is listed in `src/game/config/assets.ts`
+(`ASSET_MANIFEST`). `PreloadScene` loads them all and logs an error for any file
+that is missing — there are no procedural placeholders.
 
-Texture keys and paths are defined in `src/game/config/assets.ts`
-(`ASSET_MANIFEST`). To add a new sprite, add an entry there and a fallback
-draw function, then drop the PNG.
+`manifest-integrity.test.ts` fails if a manifest entry has no PNG, if a PNG on
+disk is not in the manifest, or if an animation needs more frames than its sheet
+declares.
 
-## Expected files
+## Style
 
-| File            | Key         | Size (px) | Used by                          |
-| --------------- | ----------- | --------- | -------------------------------- |
-| `player.png`    | `player`    | 32 × 32   | Player entity (both scenes)      |
-| `librarian.png` | `librarian` | 32 × 32   | Librarian NPC (LibraryScene)     |
-| `book.png`      | `book`      | 16 × 20   | Selectable books (LibraryScene)  |
-| `torch.png`     | `torch`     | 8 × 40    | Reading-desk torch (LibraryScene)|
-| `car.png`       | `car`       | 64 × 32   | Street cars (OutsideScene)       |
+- **Outside** — a modern street: flat-vector illustration, soft daylight.
+- **Library** — a 14th-century monastic scriptorium: hand-painted, warm
+  candlelight, isometric 2:1. Wall pieces (`oak_door`, `tapestry`,
+  `gothic_window`) are mapped onto the left/right iso wall planes; `masonry` is a
+  2:1 floor diamond.
+- Portraits (`public/assets/portraits`) and the book frames
+  (`public/assets/book`) share the same two registers.
 
-Notes:
-- `player` / `librarian` are forced to 32×32 on screen via `setDisplaySize`, so
-  higher-res PNGs scale down cleanly.
-- `book` / `torch` / `car` render at native PNG size — match the sizes above.
-- Keep transparent backgrounds (PNG alpha). The game sets
-  `imageRendering: pixelated`, so crisp pixel art stays crisp.
+## Authoring size
 
-## Generating art
+Sprites are authored at **2× their on-screen size** (`ART_SCALE = 0.5`), so the
+GPU's bilinear sample is an exact box-filter downscale. Phaser runs with
+`antialias: true` (no `pixelArt`); display a sprite with `.setScale(ART_SCALE)`
+or a per-sprite factor on top of it.
 
-Use the installed `pixel-art-sprites` skill, e.g.:
+Sheets are horizontal strips with a fixed frame size (declared in the manifest):
 
-> Generate a 32×32 pixel-art sprite of a librarian NPC: silver hair, glasses,
-> brown tunic, transparent background. Save to
-> `public/assets/sprites/librarian.png`.
+| Sheet | Frames | Notes |
+| --- | --- | --- |
+| `player_side` | 2 | 0 = long stride, 1 = legs together; faces left |
+| `player_front` / `player_back` | 3 | 0 = standing, 1/2 = a foot lifted; walk plays 1,0,2,0 |
+| `ped_a`, `ped_b`, `ped_c` | 2 | stride / standing; all face left |
+| `librarian_walk` | 2 | faces right; flipped for the return trip |
+| `librarian_read` | 2 | 0 = closed book, 1 = reading (rest pose); drawn facing SW, flipped to face SE |
+| `librarian_station` | 2 | the same desk and stool WITHOUT the monk, registered to `librarian_read` |
 
-For animated sprites later, switch `this.load.image` to
-`this.load.spritesheet(key, path, { frameWidth, frameHeight })` in
-`PreloadScene` and define animations in the consuming scene.
+Cars are single images; `wheel_<colour>.png` is a disc cut from that car's own
+wheel, drawn over the baked wheel and rotated as it drives (geometry in
+`CAR_WHEELS`). The bookcase sprite includes its gallery and spiral stair.
+
+Flames are separate sprites (`flame_a`, `flame_b`) swapped on a shared timer in
+`LibraryScene`, so candles, braziers and sconces are static bodies.
+
+## How the art is made
+
+Generated and cut out in **Affinity** through the `affinity-scripting` skill
+(Canva AI `generateImage`, `removeBackground`, `generativeEditImage`), one master
+document per scene (`outside.afdesign`, `library.afdesign`) with each sprite as a
+named layer. Export transparent PNGs from there, trim any baked ground shadow,
+and resize to 2× display size. There is no seed, so a generation cannot be
+reproduced — treat the PNGs and the Affinity masters as the source of truth, and
+edit the layer rather than regenerating when a sprite needs a touch-up.
