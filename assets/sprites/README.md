@@ -32,7 +32,7 @@ Sheets are horizontal strips with a fixed frame size (declared in the manifest):
 | `player_side` | 2 | 0 = long stride, 1 = legs together; faces left |
 | `player_front` / `player_back` | 3 | 0 = standing, 1/2 = a foot lifted; walk plays 1,0,2,0 |
 | `ped_a`, `ped_b`, `ped_c` | 2 | stride / standing; all face left |
-| `librarian_walk` | 2 | faces right; flipped for the return trip |
+| `librarian_walk` | 2 | 0 = long stride, 1 = standing, feet together; faces left, flipped for rightward travel |
 | `librarian_read` | 2 | 0 = closed book, 1 = reading (rest pose); drawn facing SW, flipped to face SE |
 | `librarian_station` | 2 | the same desk and stool WITHOUT the monk, registered to `librarian_read` |
 
